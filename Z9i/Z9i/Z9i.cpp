@@ -7,7 +7,6 @@
 #include <string>
 #include <cstdlib>
 #include <crtdbg.h>
-
 using namespace std;
 
 
@@ -16,74 +15,104 @@ int main()
     try
     {
         setlocale(0, "Russian");
-        fstream data;
+        fstream inputData;
         fstream data2;
         fstream output;
         Ticket destination;
         Ticket maxDestination;
         Ticket flightNo;
-        cout << "Использовать стандартные имена файлов? <Y/N>" << endl;
-        char yn;
-        cin >> yn;
-        if (yn == 'N' || yn == 'n')
+        string inputDataFile = "passengerData.txt";
+        string outputDataFile = "output.txt";
+        bool useDefaultFileName;
+        bool correctResponseEntered = false;
+
+        while (!correctResponseEntered)
         {
-            cout << "\nВведите имя файла для ввода. (где будут считываемые данные)" << endl;
-            char* fileName = new char[30];
-            cin >> fileName;
-            data.open(fileName);
-            data2.open(fileName);
-            if (!data.is_open() || !data2.is_open())
+            cout << "Использовать стандартные имена файлов? <Y/N>" << endl;
+            string userResponse; cin >> userResponse;
+
+            switch (toupper(userResponse[0]))
             {
+                case 'N':
+                    useDefaultFileName = false;
+                    correctResponseEntered = true;
+                    break;
+                case 'Y':
+                    useDefaultFileName = true;
+                    correctResponseEntered = true;
+                    break;
+                default:
+                    cout << "Некорректный ответ.\n";
+            }
+        }
+
+
+        if (!useDefaultFileName)
+        {
+            while (true)
+            {
+                cout << "\nВведите название файла с вводными данными:" << endl;
+                cin >> inputDataFile;
+
+                inputData.open(inputDataFile);
+                if (inputData.is_open())
+                {
+                    cout << "\nФайл открыт.\n";
+                    break;
+                }
+
                 throw("\nНе удаётся открыть указанный файл.");
             }
-            cout << "\nФайл открыт.\n";
-            cout << endl;
-            cout << "Введите имя файла для вывода." << endl;
-            cin >> fileName;
-            output.open(fileName);
-            delete[] fileName;
-            if (!output.is_open())
+
+            while (true)
             {
+                cout << "\nВведите имя файла для вывода:" << endl;
+                cin >> inputDataFile;
+
+                output.open(inputDataFile);
+                if (output.is_open())
+                {
+                    cout << "\nФайл открыт.\n";
+                    break;
+                }
+
                 throw("\nНе удаётся открыть указанный файл.");
-            }
-            cout << "\nФайл открыт.\n";
+            }    
 
-            cout << "\nПорядок ввода для каждого билета таков:\n" << endl;
-            cout << "Пункт назначения\n" << "Номер рейса\n" << "Фамилия и имя пассажира\n" << "Дата вылета\n";
+            cout << "\nФормат билета:\n" << endl;
+            cout << "Пункт назначения; Номер рейса; Фамилия и имя пассажира; Дата вылета" << endl;
+            cout << "Таллин, Эстония; 512412523; Латин Артем; 21.09.2020 " << endl;
+            cout << "Введите данные:(ctrl+c для выхода)\n\n";
 
-            cout << "\nВведите данные. (0 для выхода)\n\n";
+            String stuff; cin >> stuff;
 
-            String stuff;
-            cin >> stuff;
             for (USInt i = 2; stuff != '0'; i++)
             {
-                data << stuff;
+                inputData << stuff;
                 cin >> stuff;
-                data << endl;
+                inputData << endl;
                 if (i % 5 == 0)
                 {
-                    data << endl;
+                    inputData << endl;
                 }
             }
         }
-        else if (yn == 'Y' || yn == 'y')
+
+        inputData.open(inputDataFile);
+        output.open(outputDataFile);
+        if (!output.is_open() || !inputData.is_open())
         {
-            data.open("passengerdata.txt");
-            data2.open("passengerdata.txt");
-            output.open("output.txt");
-            if (!output.is_open() || !data.is_open() || !data2.is_open())
-            {
-                throw("\nНе удаётся открыть один из стандартных файлов...");
-            }
+            throw("\nНе удаётся открыть один из файлов.");
         }
-        else throw("...?");
+
+
         USInt counter = 0;
         output << endl;
         output << "Список всех пунктов назначения: \t\t\t";
         char* temp = new char[255];
         counter = 0;
-        data.clear();
-        data.seekg(0, output.beg);
+        inputData.clear();
+        inputData.seekg(0, output.beg);
 
         USInt pos = 0, j = 0;
         USInt nMatches = 0;
@@ -100,15 +129,15 @@ int main()
             bool copyFound = false;
             bool fstTime = true;
             output.clear();
-            data.clear();
-            data.seekg(0, output.beg);
-            while (!data.eof())
+            inputData.clear();
+            inputData.seekg(0, output.beg);
+            while (!inputData.eof())
             {
                 pos2++;
-                data.getline(temp, 255, '\n');
+                inputData.getline(temp, 255, '\n');
                 for (USInt i = 0; i < 4; i++)
                 {
-                    data.ignore(30, '\n');
+                    inputData.ignore(30, '\n');
                 }
                 for (y = 0; temp[y] == destination[y] && temp[t - 1] != '\0'; y++, t++)
                 {
@@ -136,7 +165,7 @@ int main()
                         }
                     }
                 }
-                if (data.eof() && firstTime == false)
+                if (inputData.eof() && firstTime == false)
                 {
                     nMatches++;
                     nTickets[j] = counter;
@@ -171,7 +200,7 @@ int main()
         delete[] temp;
         delete[] nTickets;
         cout << "\nДанные успешно выведены в файл.\n";
-        data.close();
+        inputData.close();
         data2.close();
         output.close();
         _CrtDumpMemoryLeaks(); // ???
